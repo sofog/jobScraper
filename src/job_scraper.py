@@ -45,6 +45,8 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 # =============================================================================
 # PHASE 1: BASIC SCRAPING
@@ -61,7 +63,11 @@ def fetch_injected_html_selenium(url: str) -> list[dict]:
         
         # Wait for job listings to appear (adjust selector to match the site)
         # This waits up to 10 seconds for elements to load
-        WebDriverWait(browser, 10)
+        WebDriverWait(browser, 30).until(
+            EC.presence_of_all_elements_located(
+                (By.CSS_SELECTOR, 'a[data-automation-id="jobTitle"]')
+            )
+        )
         # .until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "...")))
         
         # NOW get the fully rendered HTML
@@ -70,13 +76,25 @@ def fetch_injected_html_selenium(url: str) -> list[dict]:
         soup = BeautifulSoup(html, "lxml")
 
         jobs = []
-        job_cards = soup.find_all(job="card")
+        job_links = soup.select('a[data-automation-id="jobTitle"]')
+        
+        # Ben scraper
+        # job_cards = soup.find_all(job="card")
 
-        for job in job_cards:
-            title = job.div.h3.string
+        # for job in job_cards:
+        #     title = job.div.h3.string
 
-            link = job.find("a", href=True)
-            href = link.get("href", "")
+        #     link = job.find("a", href=True)
+        #     href = link.get("href", "")
+
+        #     jobs.append({
+        #         "title": title,
+        #         "url": href
+        #     })
+
+        for job in job_links:
+            title = job.string
+            href = job.get("href", "")
 
             jobs.append({
                 "title": title,
@@ -265,8 +283,9 @@ def main():
     """
     
     # Configuration
-    URL = "https://www.thanksben.com/careers"
-    
+    # URL = "https://www.thanksben.com/careers"
+    URL = "https://transperfect.wd5.myworkdayjobs.com/en-US/transperfect/jobs?locations=9768080a32ba011d01bf2372dc48ea94&timeType=b250c2d4da14010eb17455f4c9167700&Job_Category=9768080a32ba01d4555dd4144c48115b&Job_Category=9768080a32ba0182773ec3144c480b5b"
+
     # TODO 7: Add keywords you want to filter by
     KEYWORDS = [
         "engineer", 
